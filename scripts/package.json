@@ -1,0 +1,11 @@
+{
+  "name": "@ikngtty/ran-mouri-discord-bot-scripts",
+  "version": "1.0.0",
+  "description": "Scripts to manage ran-mouri-discord-bot.",
+  "license": "MIT",
+  "author": "ikngtty",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
