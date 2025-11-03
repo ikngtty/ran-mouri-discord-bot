@@ -27,7 +27,7 @@ main().catch(console.error);
 function requireEnvVar(env, key) {
   const v = env[key];
   if (v == null || v === "") {
-    console.error(`Env var ${key} is required.`);
+    console.error(`Required env var ${key}`);
     process.exit(1);
   }
   return v;
