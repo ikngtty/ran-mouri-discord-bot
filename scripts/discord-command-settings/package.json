@@ -1,7 +1,7 @@
 {
-  "name": "@ikngtty/ran-mouri-discord-bot-scripts",
+  "name": "@ikngtty/ran-mouri-discord-bot-scripts-discord-command-settings",
   "version": "1.0.0",
-  "description": "Scripts to manage ran-mouri-discord-bot.",
+  "description": "Scripts to manage ran-mouri-discord-bot command settings.",
   "license": "MIT",
   "author": "ikngtty",
   "type": "module",

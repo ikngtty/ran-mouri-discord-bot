@@ -1,6 +1,6 @@
-# Scripts
+# Scripts - Discord command settings
 
-To manage command settings of Discord Application.
+To manage Discord command settings.
 
 ## Preparation
 
