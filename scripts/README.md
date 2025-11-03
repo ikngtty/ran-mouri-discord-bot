@@ -4,7 +4,7 @@ To manage command settings of Discord Application.
 
 ## Preparation
 
-Set environment variables. (cf. [.env.sample](.env.sample))
+Make `config.json` file. (cf. [config.samlple.json](config.samlple.json))
 
 ## Run
 

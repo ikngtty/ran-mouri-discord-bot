@@ -1,9 +1,8 @@
-async function main() {
-  // Get env vars.
-  const appId = requireEnvVar(process.env, "APP_ID");
-  const botToken = requireEnvVar(process.env, "BOT_TOKEN");
-  const guildId = requireEnvVar(process.env, "GUILD_ID");
+import config from "./config.json" with { type: "json" };
 
+const { appId, botToken, guildId } = config;
+
+async function main() {
   // Get arguments.
   if (process.argv.length <= 2) {
     console.error("Required argument subcommand");
@@ -118,13 +117,4 @@ async function showResponse(response) {
   if (body !== "") {
     console.dir(JSON.parse(body), { depth: null });
   }
-}
-
-function requireEnvVar(env, key) {
-  const v = env[key];
-  if (v == null || v === "") {
-    console.error(`Required env var ${key}`);
-    process.exit(1);
-  }
-  return v;
 }
