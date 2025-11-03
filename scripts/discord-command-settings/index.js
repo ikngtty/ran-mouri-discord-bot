@@ -1,4 +1,4 @@
-import Discord from "./discord.js";
+import Discord from "./lib/discord.js";
 
 import config from "./config.json" with { type: "json" };
 const { botToken, appId, guildId } = config;
