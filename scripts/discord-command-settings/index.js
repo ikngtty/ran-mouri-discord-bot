@@ -1,6 +1,7 @@
-import config from "./config.json" with { type: "json" };
+import Discord from "./discord.js";
 
-const { appId, botToken, guildId } = config;
+import config from "./config.json" with { type: "json" };
+const { botToken, appId, guildId } = config;
 
 async function main() {
   // Get arguments.
@@ -11,27 +12,41 @@ async function main() {
   const subcommand = process.argv[2];
 
   // Execute.
+  const discord = new Discord(botToken, appId, { guildId });
   switch (subcommand) {
     case "list":
-      await listCommand(appId, botToken, guildId);
+      {
+        const { ok, value } = await discord.listCommand();
+        console.dir(value, { depth: null });
+      }
       break;
 
     case "add":
-      if (process.argv.length <= 3) {
-        console.error("Required argument command name");
-        process.exit(1);
+      {
+        if (process.argv.length <= 3) {
+          console.error("Required argument command name");
+          process.exit(1);
+        }
+        const commandName = process.argv[3];
+
+        const command = makeCommand(commandName);
+
+        const { ok, value } = await discord.addCommand(command);
+        console.dir(value, { depth: null });
       }
-      const commandNameToAdd = process.argv[3];
-      await addCommand(appId, botToken, guildId, commandNameToAdd);
       break;
 
     case "remove":
-      if (process.argv.length <= 3) {
-        console.error("Required argument command ID");
-        process.exit(1);
+      {
+        if (process.argv.length <= 3) {
+          console.error("Required argument command ID");
+          process.exit(1);
+        }
+        const commandId = process.argv[3];
+
+        const { ok, value } = await discord.removeCommand(commandId);
+        console.dir(value, { depth: null });
       }
-      const commandIdToRemove = process.argv[3];
-      await removeCommand(appId, botToken, guildId, commandIdToRemove);
       break;
 
     default:
@@ -43,78 +58,17 @@ async function main() {
 
 main().catch(console.error);
 
-async function listCommand(appId, botToken, guildId) {
-  const url = getDicordApiUrlGuildCommands(appId, guildId);
-  const headers = makeHeaders(botToken);
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
-  });
-
-  await showResponse(response);
-}
-
-async function addCommand(appId, botToken, guildId, commandName) {
-  const url = getDicordApiUrlGuildCommands(appId, guildId);
-  const headers = makeHeaders(botToken);
-
-  let body = null;
-  switch (commandName) {
+function makeCommand(name) {
+  switch (name) {
     case "ping":
-      body = {
-        name: "ping",
+      return {
+        name,
         description: "🏓",
       };
-      break;
 
     default:
       console.error("Invalid command name");
       process.exit(1);
       break;
-  }
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
-
-  await showResponse(response);
-}
-
-async function removeCommand(appId, botToken, guildId, commandId) {
-  const url = getDicordApiUrlGuildCommand(appId, guildId, commandId);
-  const headers = makeHeaders(botToken);
-
-  const response = await fetch(url, {
-    method: "DELETE",
-    headers,
-  });
-
-  await showResponse(response);
-}
-
-function getDicordApiUrlGuildCommands(appId, guildId) {
-  return `https://discord.com/api/v10/applications/${appId}/guilds/${guildId}/commands`;
-}
-
-function getDicordApiUrlGuildCommand(appId, guildId, commandId) {
-  const urlOfCommands = getDicordApiUrlGuildCommands(appId, guildId);
-  return `${urlOfCommands}/${commandId}`;
-}
-
-function makeHeaders(botToken) {
-  return {
-    Authorization: `Bot ${botToken}`,
-    "Content-Type": "application/json",
-  };
-}
-
-async function showResponse(response) {
-  console.log(`${response.status} ${response.statusText}`);
-  const body = await response.text();
-  if (body !== "") {
-    console.dir(JSON.parse(body), { depth: null });
   }
 }
