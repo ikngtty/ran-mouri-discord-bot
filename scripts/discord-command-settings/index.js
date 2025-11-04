@@ -1,5 +1,5 @@
 import Discord from "./lib/discord.js";
-
+import commands from "./commands.json" with { type: "json" };
 import config from "./config.json" with { type: "json" };
 const { botToken, appId, guildId } = config;
 
@@ -29,7 +29,11 @@ async function main() {
         }
         const commandName = process.argv[3];
 
-        const command = makeCommand(commandName);
+        const command = commands[commandName];
+        if (!command) {
+          console.error("Invalid command name");
+          process.exit(1);
+        }
 
         const { ok, value } = await discord.addCommand(command);
         console.dir(value, { depth: null });
@@ -57,18 +61,3 @@ async function main() {
 }
 
 main().catch(console.error);
-
-function makeCommand(name) {
-  switch (name) {
-    case "ping":
-      return {
-        name,
-        description: "🏓",
-      };
-
-    default:
-      console.error("Invalid command name");
-      process.exit(1);
-      break;
-  }
-}
