@@ -1,18 +1,32 @@
+import { parseArgs } from "node:util";
+
 import Discord from "./lib/discord.js";
 import commands from "./commands.json" with { type: "json" };
 import config from "./config.json" with { type: "json" };
 const { botToken, appId, guildId } = config;
 
 async function main() {
+  const { values: options, positionals: args } = parseArgs({
+    allowPositionals: true,
+    options: {
+      global: {
+        type: "boolean",
+        short: "g",
+        default: false,
+      },
+    }});
+
   // Get arguments.
-  if (process.argv.length <= 2) {
+  if (args.length <= 0) {
     console.error("Required argument subcommand");
     process.exit(1);
   }
-  const subcommand = process.argv[2];
+  const subcommand = args[0];
 
   // Execute.
-  const discord = new Discord(botToken, appId, { guildId });
+  const discord = new Discord(botToken, appId, {
+    guildId: options.global ? "" : guildId,
+  });
   switch (subcommand) {
     case "list":
       {
@@ -23,11 +37,11 @@ async function main() {
 
     case "add":
       {
-        if (process.argv.length <= 3) {
+        if (args.length <= 1) {
           console.error("Required argument command name");
           process.exit(1);
         }
-        const commandName = process.argv[3];
+        const commandName = args[1];
 
         const command = commands[commandName];
         if (!command) {
@@ -42,11 +56,11 @@ async function main() {
 
     case "remove":
       {
-        if (process.argv.length <= 3) {
+        if (args.length <= 1) {
           console.error("Required argument command ID");
           process.exit(1);
         }
-        const commandId = process.argv[3];
+        const commandId = args[1];
 
         const { ok, value } = await discord.removeCommand(commandId);
         console.dir(value, { depth: null });
