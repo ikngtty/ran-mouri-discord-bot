@@ -1,1 +1,0 @@
-const ps = PropertiesService.getScriptProperties();
