@@ -11,8 +11,20 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import { ResponseError } from './types';
+
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
+		const publicKey = env.DISCORD_PUBLIC_KEY;
+		if (publicKey == null || publicKey === '') {
+			console.log('Required env var "DISCORD_PUBLIC_KEY".');
+			const err: ResponseError = {
+				title: 'Internal Server Error',
+				detail: 'Initialization is failed.',
+			};
+			return new Response(JSON.stringify(err), { status: 500 });
+		}
+
 		return new Response('Hello World!');
 	},
 } satisfies ExportedHandler<Env>;
