@@ -42,6 +42,17 @@ export default {
 			return makeResponseInvalidSignature();
 		}
 
+		// Parse request's body.
+		let interaction;
+		try {
+			interaction = JSON.parse(body);
+		} catch (err) {
+			if (err instanceof SyntaxError) {
+				return makeResponseBrokenRequestBody();
+			}
+			throw err;
+		}
+
 		return new Response('Hello World!');
 	},
 } satisfies ExportedHandler<Env>;
@@ -73,4 +84,12 @@ function makeResponseInvalidSignature(): Response {
 		detail: 'Your signature is invalid.',
 	};
 	return new Response(JSON.stringify(err), { status: 401 });
+}
+
+function makeResponseBrokenRequestBody(): Response {
+	const err: ResponseError = {
+		title: 'Broken Request Body',
+		detail: "Your request's body is broken.",
+	};
+	return new Response(JSON.stringify(err), { status: 400 });
 }

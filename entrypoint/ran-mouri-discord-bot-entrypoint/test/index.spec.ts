@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('The Entrypoint Worker', () => {
 	it('responds with Hello World!', async () => {
-		const body = 'text from discord';
+		const body = '{"type":1}';
 		const timestamp = '12345';
 		const { publicKey, signature } = makeSignature(body, timestamp);
 
@@ -36,7 +36,7 @@ describe('The Entrypoint Worker', () => {
 	});
 
 	it('refuses a wrong signature', async () => {
-		const body = 'text from discord';
+		const body = '{"type":1}';
 		const timestamp = '12345';
 		const { publicKey, signature: rightSignature } = makeSignature(body, timestamp);
 		const signature = destroySignature(rightSignature);
@@ -64,7 +64,7 @@ describe('The Entrypoint Worker', () => {
 	});
 
 	it('refuses no signature header', async () => {
-		const body = 'text from discord';
+		const body = '{"type":1}';
 		const timestamp = '12345';
 		const { publicKey, signature } = makeSignature(body, timestamp);
 
@@ -91,7 +91,7 @@ describe('The Entrypoint Worker', () => {
 	});
 
 	it('refuses no timestamp header', async () => {
-		const body = 'text from discord';
+		const body = '{"type":1}';
 		const timestamp = '12345';
 		const { publicKey, signature } = makeSignature(body, timestamp);
 
@@ -115,6 +115,33 @@ describe('The Entrypoint Worker', () => {
 		const respBody = await response.json();
 		expect(respBody).toHaveProperty('title', 'Unauthorized');
 		expect(respBody).toHaveProperty('detail', 'Header key "X-Signature-Timestamp" is required but missing.');
+	});
+
+	it('refuses a broken request', async () => {
+		const body = 'Invalid JSON';
+		const timestamp = '12345';
+		const { publicKey, signature } = makeSignature(body, timestamp);
+
+		const request = new IncomingRequest('http://example.com', {
+			method: 'POST',
+			headers: {
+				'X-Signature-Ed25519': signature,
+				'X-Signature-Timestamp': timestamp,
+			},
+			body,
+		});
+		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		// Create an empty context to pass to `worker.fetch()`.
+		const ctx = createExecutionContext();
+
+		const response = await worker.fetch(request, env, ctx);
+		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(400);
+		const respBody = await response.json();
+		expect(respBody).toHaveProperty('title', 'Broken Request Body');
+		expect(respBody).toHaveProperty('detail', "Your request's body is broken.");
 	});
 
 	it('returns an error when env var "DISCORD_PUBLIC_KEY" is missing', async () => {
