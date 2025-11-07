@@ -53,9 +53,32 @@ export default {
 			throw err;
 		}
 
-		return new Response('Hello World!');
+		// Response for each interaction.
+		switch (interaction.type) {
+			case 1: // PING
+				return handlePing();
+			case 2: // APPLICATION COMMAND
+				if (!('data' in interaction)) {
+					return makeResponseUnexpectedRequestBody();
+				}
+				switch (interaction.data.name) {
+					case 'ping':
+						return handlePingCommand();
+				}
+		}
+		return makeResponseUnexpectedRequestBody();
 	},
 } satisfies ExportedHandler<Env>;
+
+function handlePing(): Response {
+	const body = { type: 1 };
+	return new Response(JSON.stringify(body));
+}
+
+function handlePingCommand(): Response {
+	const body = {}; // TODO
+	return new Response(JSON.stringify(body));
+}
 
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
 	const message = body + timestamp;
@@ -90,6 +113,14 @@ function makeResponseBrokenRequestBody(): Response {
 	const err: ResponseError = {
 		title: 'Broken Request Body',
 		detail: "Your request's body is broken.",
+	};
+	return new Response(JSON.stringify(err), { status: 400 });
+}
+
+function makeResponseUnexpectedRequestBody(): Response {
+	const err: ResponseError = {
+		title: 'Unexpected Request Body',
+		detail: "Your request's body is something different from our expectations.",
 	};
 	return new Response(JSON.stringify(err), { status: 400 });
 }

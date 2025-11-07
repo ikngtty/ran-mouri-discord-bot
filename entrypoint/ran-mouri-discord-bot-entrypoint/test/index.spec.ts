@@ -10,7 +10,7 @@ const SEED = Buffer.from('SeedForTest234567890123456789012');
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('The Entrypoint Worker', () => {
-	it('responds with Hello World!', async () => {
+	it('responds to ping', async () => {
 		const body = '{"type":1}';
 		const timestamp = '12345';
 		const { publicKey, signature } = makeSignature(body, timestamp);
@@ -32,7 +32,8 @@ describe('The Entrypoint Worker', () => {
 		await waitOnExecutionContext(ctx);
 
 		expect(response.status).toBe(200);
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+		const respBody = await response.json();
+		expect(respBody).toHaveProperty('type', 1);
 	});
 
 	it('refuses a wrong signature', async () => {
@@ -142,6 +143,33 @@ describe('The Entrypoint Worker', () => {
 		const respBody = await response.json();
 		expect(respBody).toHaveProperty('title', 'Broken Request Body');
 		expect(respBody).toHaveProperty('detail', "Your request's body is broken.");
+	});
+
+	it('refuses a invalid request', async () => {
+		const body = '{"type":42}';
+		const timestamp = '12345';
+		const { publicKey, signature } = makeSignature(body, timestamp);
+
+		const request = new IncomingRequest('http://example.com', {
+			method: 'POST',
+			headers: {
+				'X-Signature-Ed25519': signature,
+				'X-Signature-Timestamp': timestamp,
+			},
+			body,
+		});
+		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		// Create an empty context to pass to `worker.fetch()`.
+		const ctx = createExecutionContext();
+
+		const response = await worker.fetch(request, env, ctx);
+		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(400);
+		const respBody = await response.json();
+		expect(respBody).toHaveProperty('title', 'Unexpected Request Body');
+		expect(respBody).toHaveProperty('detail', "Your request's body is something different from our expectations.");
 	});
 
 	it('returns an error when env var "DISCORD_PUBLIC_KEY" is missing', async () => {
