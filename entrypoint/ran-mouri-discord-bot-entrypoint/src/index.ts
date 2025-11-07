@@ -81,7 +81,7 @@ function handlePingCommand(): Response {
 }
 
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
-	const message = body + timestamp;
+	const message = timestamp + body;
 	return sign.detached.verify(Buffer.from(message), Buffer.from(signature, 'hex'), Buffer.from(publicKey, 'hex'));
 }
 

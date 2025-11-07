@@ -192,7 +192,7 @@ describe('The Entrypoint Worker', () => {
 });
 
 function makeSignature(body: string, timestamp: string): { publicKey: string; signature: string } {
-	const message = body + timestamp;
+	const message = timestamp + body;
 	const keyPair = sign.keyPair.fromSeed(SEED);
 	const publicKey = Buffer.from(keyPair.publicKey).toString('hex');
 	const signatureBytes = sign.detached(Buffer.from(message), keyPair.secretKey);
