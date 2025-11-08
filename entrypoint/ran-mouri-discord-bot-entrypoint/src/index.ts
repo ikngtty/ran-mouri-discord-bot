@@ -309,13 +309,9 @@ async function deleteChoice(db: D1Database, guildId: string, groupName: string, 
 
 async function fetchExistenseOfChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<boolean> {
 	const sql = 'SELECT Label FROM Choices WHERE GuildId = ? AND GroupName = ? AND Label = ?';
-	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
-	if (!dbResult.success) {
-		console.log(dbResult.error);
-		throw new Error('D1 Error');
-	}
+	const record = await db.prepare(sql).bind(guildId, groupName, label).first();
 
-	return dbResult.results.length > 0;
+	return record != null;
 }
 
 async function fetchChoices(db: D1Database, guildId: string, groupName: string): Promise<string[]> {
@@ -360,17 +356,12 @@ async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Pr
 
 async function fetchCountOfChoicesOfGuild(db: D1Database, guildId: string): Promise<number> {
 	const sql = 'SELECT COUNT(Label) as Count FROM Choices WHERE GuildId = ?';
-	const dbResult = await db.prepare(sql).bind(guildId).run();
-	if (!dbResult.success) {
-		console.log(dbResult.error);
+	const record = await db.prepare(sql).bind(guildId).first();
+	if (record == null) {
+		console.log('No result of count.');
 		throw new Error('D1 Error');
 	}
 
-	if (dbResult.results.length !== 1) {
-		console.log('Invalid results:', dbResult.results);
-		throw new Error('D1 Error');
-	}
-	const record = dbResult.results[0];
 	if (record.Count == null || typeof record.Count !== 'number') {
 		console.log('Invalid record:', record);
 		throw new Error('D1 Error');
