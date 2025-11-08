@@ -5,6 +5,13 @@
     },
     "choices": {
         "name": "choices",
-        "description": "選択肢の確認🔍"
+        "description": "選択肢関連",
+        "options": [
+            {
+                "type": 1,
+                "name": "view",
+                "description": "選択肢の確認🔍"
+            }
+        ]
     }
 }

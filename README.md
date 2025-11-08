@@ -2,5 +2,5 @@
 
 ## Commands
 
-- `/choices`
+- `/choices view`
     - View choice group names.

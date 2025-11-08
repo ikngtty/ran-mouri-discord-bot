@@ -56,15 +56,30 @@ export default {
 		switch (interaction.type) {
 			case 1: // PING
 				return handlePing();
+
 			case 2: // APPLICATION COMMAND
-				if (!('data' in interaction)) {
+				if (interaction.data == null) {
 					return makeResponseUnexpectedRequestBody();
 				}
-				switch (interaction.data.name) {
+				const data = interaction.data;
+
+				switch (data.name) {
 					case 'ping':
 						return handleCommandPing();
+
 					case 'choices':
-						return handleCommandChoices(env.prod_db_ran_mouri, interaction);
+						if (!Array.isArray(data.options) || data.options.length !== 1) {
+							return makeResponseUnexpectedRequestBody();
+						}
+						const subcommand = data.options[0];
+						if (subcommand.type !== 1) {
+							return makeResponseUnexpectedRequestBody();
+						}
+
+						switch (subcommand.name) {
+							case 'view':
+								return handleCommandChoicesView(env.prod_db_ran_mouri, interaction);
+						}
 				}
 		}
 		return makeResponseUnexpectedRequestBody();
@@ -86,7 +101,7 @@ function handleCommandPing(): Response {
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoices(db: D1Database, interaction: any): Promise<Response> {
+async function handleCommandChoicesView(db: D1Database, interaction: any): Promise<Response> {
 	if (!interaction.guild_id || typeof interaction.guild_id !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
