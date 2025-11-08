@@ -180,14 +180,11 @@ describe('The Entrypoint Worker', () => {
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
-		const response = await worker.fetch(request, env as Env, ctx);
-		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
-		await waitOnExecutionContext(ctx);
-
-		expect(response.status).toBe(500);
-		const respBody = await response.json();
-		expect(respBody).toHaveProperty('title', 'Internal Server Error');
-		expect(respBody).toHaveProperty('detail', 'Initialization is failed.');
+		await expect(async () => {
+			await worker.fetch(request, env as Env, ctx);
+			// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+			await waitOnExecutionContext(ctx);
+		}).rejects.toThrow('Missing env var "DISCORD_PUBLIC_KEY".');
 	});
 });
 

@@ -22,8 +22,7 @@ export default {
 		// Get env vars.
 		const publicKey = env.DISCORD_PUBLIC_KEY;
 		if (publicKey == null || publicKey === '') {
-			console.log('Required env var "DISCORD_PUBLIC_KEY".');
-			return makeResponseNoEnvVar();
+			throw new Error('Missing env var "DISCORD_PUBLIC_KEY".');
 		}
 
 		// Get request's headers and body.
@@ -94,14 +93,6 @@ function makeHeaderNormal(): HeadersInit {
 	return {
 		'Content-Type': 'application/json',
 	};
-}
-
-function makeResponseNoEnvVar(): Response {
-	const err: ResponseError = {
-		title: 'Internal Server Error',
-		detail: 'Initialization is failed.',
-	};
-	return Response.json(err, { status: 500 });
 }
 
 function makeResponseNoHeaderOfSign(key: string): Response {
