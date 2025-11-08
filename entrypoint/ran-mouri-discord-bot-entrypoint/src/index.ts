@@ -63,7 +63,7 @@ export default {
 				}
 				switch (interaction.data.name) {
 					case 'ping':
-						return handlePingCommand();
+						return handleCommandPing();
 				}
 		}
 		return makeResponseUnexpectedRequestBody();
@@ -75,7 +75,7 @@ function handlePing(): Response {
 	return new Response(JSON.stringify(body));
 }
 
-function handlePingCommand(): Response {
+function handleCommandPing(): Response {
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: {
