@@ -33,6 +33,8 @@ export default {
 			throw new Error('Wrong type env var "MAX_CHOICE_COUNT_OF_GUILD".');
 		}
 
+		const db = env.prod_db_ran_mouri;
+
 		// Get request's headers and body.
 		const signature = request.headers.get(REQUEST_HEADER_SIGNATURE);
 		if (signature == null || signature === '') {
@@ -91,11 +93,11 @@ export default {
 
 						switch (subcommand.name) {
 							case 'view':
-								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId, subcommand.options);
+								return handleCommandChoicesView(db, guildId, subcommand.options);
 							case 'add':
-								return handleCommandChoicesAdd(maxChoiceCountOfGuild, env.prod_db_ran_mouri, guildId, subcommand.options);
+								return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
 							case 'delete':
-								return handleCommandChoicesDelete(env.prod_db_ran_mouri, guildId, subcommand.options);
+								return handleCommandChoicesDelete(db, guildId, subcommand.options);
 						}
 				}
 		}
