@@ -7,6 +7,7 @@
 Set these environment variables:
 
 - DISCORD_PUBLIC_KEY
+- MAX_CHOICE_COUNT_OF_GUILD
 
 ### DB
 

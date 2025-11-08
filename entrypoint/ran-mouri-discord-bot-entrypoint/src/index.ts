@@ -24,6 +24,14 @@ export default {
 		if (publicKey == null || publicKey === '') {
 			throw new Error('Missing env var "DISCORD_PUBLIC_KEY".');
 		}
+		const maxChoiceCountOfGuildText = env.MAX_CHOICE_COUNT_OF_GUILD;
+		if (maxChoiceCountOfGuildText == null || maxChoiceCountOfGuildText === '') {
+			throw new Error('Missing env var "MAX_CHOICE_COUNT_OF_GUILD".');
+		}
+		const maxChoiceCountOfGuild = parseInt(maxChoiceCountOfGuildText);
+		if (Number.isNaN(maxChoiceCountOfGuild)) {
+			throw new Error('Wrong type env var "MAX_CHOICE_COUNT_OF_GUILD".');
+		}
 
 		// Get request's headers and body.
 		const signature = request.headers.get(REQUEST_HEADER_SIGNATURE);
@@ -85,7 +93,7 @@ export default {
 							case 'view':
 								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId, subcommand.options);
 							case 'add':
-								return handleCommandChoicesAdd(env.prod_db_ran_mouri, guildId, subcommand.options);
+								return handleCommandChoicesAdd(maxChoiceCountOfGuild, env.prod_db_ran_mouri, guildId, subcommand.options);
 						}
 				}
 		}
@@ -149,7 +157,7 @@ async function handleCommandChoicesViewWithoutGroup(db: D1Database, guildId: str
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesAdd(db: D1Database, guildId: string, options: any): Promise<Response> {
+async function handleCommandChoicesAdd(maxChoiceCountOfGuild: number, db: D1Database, guildId: string, options: any): Promise<Response> {
 	if (options == null || !Array.isArray(options)) {
 		return makeResponseUnexpectedRequestBody();
 	}
@@ -174,6 +182,15 @@ async function handleCommandChoicesAdd(db: D1Database, guildId: string, options:
 
 	if (await fetchExistenseOfChoice(db, guildId, groupName, value)) {
 		const content = `${groupName}に「${value}」はもうあるわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	}
+
+	if ((await fetchCountOfChoicesOfGuild(db, guildId)) >= maxChoiceCountOfGuild) {
+		const content = '選択肢大杉';
 		const body = {
 			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 			data: { content },
@@ -293,4 +310,24 @@ async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Pr
 		groupNames.push(groupName);
 	}
 	return groupNames;
+}
+
+async function fetchCountOfChoicesOfGuild(db: D1Database, guildId: string): Promise<number> {
+	const sql = 'SELECT COUNT(Label) as Count FROM Choices WHERE GuildId = ?';
+	const dbResult = await db.prepare(sql).bind(guildId).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+
+	if (dbResult.results.length !== 1) {
+		console.log('Invalid results:', dbResult.results);
+		throw new Error('D1 Error');
+	}
+	const record = dbResult.results[0];
+	if (record.Count == null || typeof record.Count !== 'number') {
+		console.log('Invalid record:', record);
+		throw new Error('D1 Error');
+	}
+	return record.Count;
 }
