@@ -20,6 +20,9 @@
 			"database_id": "e7ec67cd-5a87-4833-b4df-7c5b19d04e6b"
 		}
 	],
+	"vars": {
+		"MAX_CHOICE_COUNT_OF_GUILD": "1000",
+	},
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
