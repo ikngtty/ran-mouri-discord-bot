@@ -92,22 +92,7 @@ async function handleCommandChoices(db: D1Database, interaction: any): Promise<R
 	}
 	const guildId: string = interaction.guild_id;
 
-	const sql = 'SELECT GroupName FROM Choices WHERE GuildId = ? GROUP BY GroupName';
-	const dbResult = await db.prepare(sql).bind(guildId).run();
-	if (!dbResult.success) {
-		console.log(dbResult.error);
-		throw new Error('D1 Error');
-	}
-
-	const groupNames: string[] = [];
-	for (const record of dbResult.results) {
-		if (!record.GroupName || typeof record.GroupName !== 'string') {
-			console.log('Invalid record:', record);
-			throw new Error('D1 Error');
-		}
-		const groupName: string = record.GroupName;
-		groupNames.push(groupName);
-	}
+	const groupNames = await fetchChoiceGroupNamesOfGuild(db, guildId);
 
 	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
 	const body = {
@@ -158,4 +143,24 @@ function makeResponseUnexpectedRequestBody(): Response {
 		detail: "Your request's body is something different from our expectations.",
 	};
 	return Response.json(err, { status: 400 });
+}
+
+async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Promise<string[]> {
+	const sql = 'SELECT GroupName FROM Choices WHERE GuildId = ? GROUP BY GroupName';
+	const dbResult = await db.prepare(sql).bind(guildId).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+
+	const groupNames: string[] = [];
+	for (const record of dbResult.results) {
+		if (!record.GroupName || typeof record.GroupName !== 'string') {
+			console.log('Invalid record:', record);
+			throw new Error('D1 Error');
+		}
+		const groupName: string = record.GroupName;
+		groupNames.push(groupName);
+	}
+	return groupNames;
 }
