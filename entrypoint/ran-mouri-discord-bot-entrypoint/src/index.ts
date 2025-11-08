@@ -68,6 +68,11 @@ export default {
 						return handleCommandPing();
 
 					case 'choices':
+						if (interaction.guild_id == null || typeof interaction.guild_id !== 'string') {
+							return makeResponseUnexpectedRequestBody();
+						}
+						const guildId: string = interaction.guild_id;
+
 						if (!Array.isArray(data.options) || data.options.length !== 1) {
 							return makeResponseUnexpectedRequestBody();
 						}
@@ -78,7 +83,7 @@ export default {
 
 						switch (subcommand.name) {
 							case 'view':
-								return handleCommandChoicesView(env.prod_db_ran_mouri, interaction);
+								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId);
 						}
 				}
 		}
@@ -101,12 +106,7 @@ function handleCommandPing(): Response {
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesView(db: D1Database, interaction: any): Promise<Response> {
-	if (!interaction.guild_id || typeof interaction.guild_id !== 'string') {
-		return makeResponseUnexpectedRequestBody();
-	}
-	const guildId: string = interaction.guild_id;
-
+async function handleCommandChoicesView(db: D1Database, guildId: string): Promise<Response> {
 	const groupNames = await fetchChoiceGroupNamesOfGuild(db, guildId);
 
 	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
