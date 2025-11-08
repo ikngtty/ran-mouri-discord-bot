@@ -127,7 +127,7 @@ async function handleCommandChoicesView(db: D1Database, guildId: string, options
 async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string, groupName: string): Promise<Response> {
 	const choiceLabels = await fetchChoices(db, guildId, groupName);
 
-	const content = `選択肢はこれ：\n${choiceLabels.join('\n')}`;
+	const content = choiceLabels.length === 0 ? 'そんな選択肢グループは無いわよ。' : `選択肢はこれ：\n${choiceLabels.join('\n')}`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
