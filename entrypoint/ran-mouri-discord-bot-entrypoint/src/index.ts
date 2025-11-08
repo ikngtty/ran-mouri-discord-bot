@@ -234,10 +234,9 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	}
 	const value: string = optionValue.value;
 
-	await deleteChoice(db, guildId, groupName, value);
+	const deleteCount = await deleteChoice(db, guildId, groupName, value);
 
-	// TODO: Messsage of no data to delete.
-	const content = `${groupName}の「${value}」を削除したわ。`;
+	const content = deleteCount === 0 ? `${groupName}の「${value}」なんて無かったわ。` : `${groupName}の「${value}」を削除したわ。`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
@@ -298,14 +297,14 @@ async function insertChoice(db: D1Database, guildId: string, groupName: string, 
 	return;
 }
 
-async function deleteChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<void> {
+async function deleteChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<number> {
 	const sql = 'DELETE FROM Choices WHERE GuildId = ? AND GroupName = ? AND Label = ?';
 	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
 	if (!dbResult.success) {
 		console.log(dbResult.error);
 		throw new Error('D1 Error');
 	}
-	return;
+	return dbResult.meta.changes;
 }
 
 async function fetchExistenseOfChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<boolean> {
