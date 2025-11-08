@@ -72,7 +72,7 @@ export default {
 
 function handlePing(): Response {
 	const body = { type: 1 };
-	return new Response(JSON.stringify(body));
+	return Response.json(body);
 }
 
 function handleCommandPing(): Response {
@@ -82,9 +82,7 @@ function handleCommandPing(): Response {
 			content: 'まさか…PING一…？',
 		},
 	};
-	return new Response(JSON.stringify(body), {
-		headers: makeHeaderNormal(),
-	});
+	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
@@ -103,7 +101,7 @@ function makeResponseNoEnvVar(): Response {
 		title: 'Internal Server Error',
 		detail: 'Initialization is failed.',
 	};
-	return new Response(JSON.stringify(err), { status: 500 });
+	return Response.json(err, { status: 500 });
 }
 
 function makeResponseNoHeaderOfSign(key: string): Response {
@@ -111,7 +109,7 @@ function makeResponseNoHeaderOfSign(key: string): Response {
 		title: 'Unauthorized',
 		detail: `Header key "${key}" is required but missing.`,
 	};
-	return new Response(JSON.stringify(err), { status: 401 });
+	return Response.json(err, { status: 401 });
 }
 
 function makeResponseInvalidSignature(): Response {
@@ -119,7 +117,7 @@ function makeResponseInvalidSignature(): Response {
 		title: 'Unauthorized',
 		detail: 'Your signature is invalid.',
 	};
-	return new Response(JSON.stringify(err), { status: 401 });
+	return Response.json(err, { status: 401 });
 }
 
 function makeResponseBrokenRequestBody(): Response {
@@ -127,7 +125,7 @@ function makeResponseBrokenRequestBody(): Response {
 		title: 'Broken Request Body',
 		detail: "Your request's body is broken.",
 	};
-	return new Response(JSON.stringify(err), { status: 400 });
+	return Response.json(err, { status: 400 });
 }
 
 function makeResponseUnexpectedRequestBody(): Response {
@@ -135,5 +133,5 @@ function makeResponseUnexpectedRequestBody(): Response {
 		title: 'Unexpected Request Body',
 		detail: "Your request's body is something different from our expectations.",
 	};
-	return new Response(JSON.stringify(err), { status: 400 });
+	return Response.json(err, { status: 400 });
 }
