@@ -9,6 +9,8 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 const SEED = Buffer.from('SeedForTest234567890123456789012');
 
+const dummyD1 = {} as D1Database;
+
 describe('The Entrypoint Worker', () => {
 	it('responds to ping', async () => {
 		const body = '{"type":1}';
@@ -23,7 +25,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -50,7 +55,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -77,7 +85,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -104,7 +115,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -131,7 +145,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -158,7 +175,10 @@ describe('The Entrypoint Worker', () => {
 			},
 			body,
 		});
-		const env = { DISCORD_PUBLIC_KEY: publicKey };
+		const env = {
+			DISCORD_PUBLIC_KEY: publicKey,
+			prod_db_ran_mouri: dummyD1,
+		};
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();
 
@@ -175,7 +195,10 @@ describe('The Entrypoint Worker', () => {
 	it('returns an error when env var "DISCORD_PUBLIC_KEY" is missing', async () => {
 		const request = new IncomingRequest('http://example.com');
 		// Make `env` by making an object satisfying Env and removing the field.
-		const fakeEnv: Env = { DISCORD_PUBLIC_KEY: '' };
+		const fakeEnv: Env = {
+			DISCORD_PUBLIC_KEY: '',
+			prod_db_ran_mouri: dummyD1,
+		};
 		const { DISCORD_PUBLIC_KEY: _, ...env } = fakeEnv;
 		// Create an empty context to pass to `worker.fetch()`.
 		const ctx = createExecutionContext();

@@ -63,6 +63,8 @@ export default {
 				switch (interaction.data.name) {
 					case 'ping':
 						return handleCommandPing();
+					case 'choices':
+						return handleCommandChoices(env.prod_db_ran_mouri, interaction);
 				}
 		}
 		return makeResponseUnexpectedRequestBody();
@@ -80,6 +82,37 @@ function handleCommandPing(): Response {
 		data: {
 			content: 'まさか…PING一…？',
 		},
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandChoices(db: D1Database, interaction: any): Promise<Response> {
+	if (!interaction.guild_id || typeof interaction.guild_id !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const guildId: string = interaction.guild_id;
+
+	const sql = 'SELECT GroupName FROM Choices WHERE GuildId = ? GROUP BY GroupName';
+	const dbResult = await db.prepare(sql).bind(guildId).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+
+	const groupNames: string[] = [];
+	for (const record of dbResult.results) {
+		if (!record.GroupName || typeof record.GroupName !== 'string') {
+			console.log('Invalid record:', record);
+			throw new Error('D1 Error');
+		}
+		const groupName: string = record.GroupName;
+		groupNames.push(groupName);
+	}
+
+	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
 	};
 	return Response.json(body, { headers: makeHeaderNormal() });
 }

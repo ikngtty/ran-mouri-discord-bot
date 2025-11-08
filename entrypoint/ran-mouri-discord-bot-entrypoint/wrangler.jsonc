@@ -12,7 +12,14 @@
 	},
 	"compatibility_flags": [
 		"nodejs_compat"
-	]
+	],
+	"d1_databases": [
+		{
+			"binding": "prod_db_ran_mouri",
+			"database_name": "prod-db-ran-mouri",
+			"database_id": "e7ec67cd-5a87-4833-b4df-7c5b19d04e6b"
+		}
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

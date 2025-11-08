@@ -1,6 +1,10 @@
 {
     "ping": {
         "name": "ping",
-        "description": "🏓"
+        "description": "疎通確認🏓"
+    },
+    "choices": {
+        "name": "choices",
+        "description": "選択肢の確認🔍"
     }
 }
