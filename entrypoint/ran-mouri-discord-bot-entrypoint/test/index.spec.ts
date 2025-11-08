@@ -3,11 +3,11 @@ import { sign } from 'tweetnacl';
 import { describe, it, expect } from 'vitest';
 import worker from '../src/index';
 
-const SEED = Buffer.from('SeedForTest234567890123456789012');
-
 // For now, you'll need to do something like this to get a correctly-typed
 // `Request` to pass to `worker.fetch()`.
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
+
+const SEED = Buffer.from('SeedForTest234567890123456789012');
 
 describe('The Entrypoint Worker', () => {
 	it('responds to ping', async () => {
