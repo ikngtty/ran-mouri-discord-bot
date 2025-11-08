@@ -109,6 +109,9 @@ export default {
 								return handleCommandChoicesDelete(db, guildId, subcommand.options);
 						}
 					}
+
+					case 'r-random':
+						return handleCommandRRandom(data.options);
 				}
 		}
 		return makeResponseUnexpectedRequestBody();
@@ -295,6 +298,30 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
+async function handleCommandRRandom(options: any): Promise<Response> {
+	let count = 7;
+	if (options != null && Array.isArray(options)) {
+		const countOption = options.find((option) => option.type === 4 && option.name == 'count');
+		if (countOption != null && countOption.value != null && typeof countOption.value === 'number') {
+			count = countOption.value;
+		}
+	}
+
+	const numsOrigin = seq(1, count);
+	if (getRandomInt(2) === 1) {
+		numsOrigin.reverse();
+	}
+	const index = getRandomInt(count);
+	const nums = numsOrigin.slice(index).concat(numsOrigin.slice(0, index));
+
+	const content = nums.join(' ');
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
 	const message = timestamp + body;
 	return sign.detached.verify(Buffer.from(message), Buffer.from(signature, 'hex'), Buffer.from(publicKey, 'hex'));
@@ -448,4 +475,13 @@ async function fetchCountOfChoicesOfGuild(db: D1Database, guildId: string): Prom
 		throw new Error('D1 Error');
 	}
 	return record.Count;
+}
+
+function seq(start: number, length: number): number[] {
+	return Array.from({ length }, (_, i) => i + start);
+}
+
+// 0 to (max - 1)
+function getRandomInt(max: number): number {
+	return Math.floor(Math.random() * max);
 }
