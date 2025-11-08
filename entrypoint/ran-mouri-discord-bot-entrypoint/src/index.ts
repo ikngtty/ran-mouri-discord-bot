@@ -127,14 +127,16 @@ async function handleCommandChoicesView(db: D1Database, guildId: string, options
 	if (!Array.isArray(options)) {
 		return makeResponseUnexpectedRequestBody();
 	}
+
 	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
 	if (!optionGroup) {
 		return handleCommandChoicesViewWithoutGroup(db, guildId);
 	}
-	const groupName = optionGroup.value;
-	if (!groupName) {
+	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
+	const groupName: string = optionGroup.value;
+
 	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
 }
 
