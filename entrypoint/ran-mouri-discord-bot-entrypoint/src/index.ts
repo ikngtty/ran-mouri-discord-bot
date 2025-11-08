@@ -94,6 +94,8 @@ export default {
 								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId, subcommand.options);
 							case 'add':
 								return handleCommandChoicesAdd(maxChoiceCountOfGuild, env.prod_db_ran_mouri, guildId, subcommand.options);
+							case 'delete':
+								return handleCommandChoicesDelete(env.prod_db_ran_mouri, guildId, subcommand.options);
 						}
 				}
 		}
@@ -208,6 +210,42 @@ async function handleCommandChoicesAdd(maxChoiceCountOfGuild: number, db: D1Data
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
+async function handleCommandChoicesDelete(db: D1Database, guildId: string, options: any): Promise<Response> {
+	if (options == null || !Array.isArray(options)) {
+		return makeResponseUnexpectedRequestBody();
+	}
+
+	// TODO: A feature to delete all choices of a group.
+
+	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
+	if (!optionGroup) {
+		return makeResponseUnexpectedRequestBody();
+	}
+	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const groupName: string = optionGroup.value;
+
+	const optionValue = options.find((option) => option.type === 3 && option.name === 'value');
+	if (!optionValue) {
+		return makeResponseUnexpectedRequestBody();
+	}
+	if (optionValue.value == null || typeof optionValue.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const value: string = optionValue.value;
+
+	await deleteChoice(db, guildId, groupName, value);
+
+	// TODO: Messsage of no data to delete.
+	const content = `${groupName}の「${value}」を削除したわ。`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
 	const message = timestamp + body;
 	return sign.detached.verify(Buffer.from(message), Buffer.from(signature, 'hex'), Buffer.from(publicKey, 'hex'));
@@ -253,6 +291,16 @@ function makeResponseUnexpectedRequestBody(): Response {
 
 async function insertChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<void> {
 	const sql = 'INSERT INTO Choices (GuildId, GroupName, Label) VALUES (?, ?, ?)';
+	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+	return;
+}
+
+async function deleteChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<void> {
+	const sql = 'DELETE FROM Choices WHERE GuildId = ? AND GroupName = ? AND Label = ?';
 	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
 	if (!dbResult.success) {
 		console.log(dbResult.error);
