@@ -3,6 +3,18 @@
         "name": "ping",
         "description": "疎通確認🏓"
     },
+    "choice": {
+        "name": "choice",
+        "description": "運命の選択🎲",
+        "options": [
+            {
+                "type": 3,
+                "name": "group",
+                "description": "選択肢グループ名",
+                "required": true
+            }
+        ]
+    },
     "choices": {
         "name": "choices",
         "description": "選択肢関連",

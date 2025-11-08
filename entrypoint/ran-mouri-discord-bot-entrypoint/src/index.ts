@@ -77,7 +77,16 @@ export default {
 					case 'ping':
 						return handleCommandPing();
 
-					case 'choices':
+					case 'choice': {
+						if (interaction.guild_id == null || typeof interaction.guild_id !== 'string') {
+							return makeResponseUnexpectedRequestBody();
+						}
+						const guildId: string = interaction.guild_id;
+
+						return handleCommandChoice(db, guildId, data.options);
+					}
+
+					case 'choices': {
 						if (interaction.guild_id == null || typeof interaction.guild_id !== 'string') {
 							return makeResponseUnexpectedRequestBody();
 						}
@@ -99,6 +108,7 @@ export default {
 							case 'delete':
 								return handleCommandChoicesDelete(db, guildId, subcommand.options);
 						}
+					}
 				}
 		}
 		return makeResponseUnexpectedRequestBody();
@@ -116,6 +126,40 @@ function handleCommandPing(): Response {
 		data: {
 			content: 'まさか…PING一…？',
 		},
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandChoice(db: D1Database, guildId: string, options: any): Promise<Response> {
+	if (options == null || !Array.isArray(options)) {
+		return makeResponseUnexpectedRequestBody();
+	}
+
+	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
+	if (!optionGroup) {
+		return makeResponseUnexpectedRequestBody();
+	}
+	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const groupName: string = optionGroup.value;
+
+	const choiceCount = await fetchCountOfChoices(db, guildId, groupName);
+	if (choiceCount === 0) {
+		const content = `「${groupName}」なんて選択肢グループは無いわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	}
+
+	const choiceLabel = await fetchRandomChoice(db, guildId, groupName);
+
+	const content = choiceLabel;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
 	};
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
@@ -339,6 +383,36 @@ async function fetchChoices(db: D1Database, guildId: string, groupName: string):
 		labels.push(label);
 	}
 	return labels;
+}
+
+async function fetchCountOfChoices(db: D1Database, guildId: string, groupName: string): Promise<number> {
+	const sql = 'SELECT COUNT(Label) as Count FROM Choices WHERE GuildId = ? AND GroupName = ?';
+	const record = await db.prepare(sql).bind(guildId, groupName).first();
+	if (record == null) {
+		console.log('No result of count.');
+		throw new Error('D1 Error');
+	}
+
+	if (record.Count == null || typeof record.Count !== 'number') {
+		console.log('Invalid record:', record);
+		throw new Error('D1 Error');
+	}
+	return record.Count;
+}
+
+async function fetchRandomChoice(db: D1Database, guildId: string, groupName: string): Promise<string> {
+	const sql = 'SELECT Label FROM Choices WHERE GuildId = ? AND GroupName = ? ORDER BY RANDOM() LIMIT 1';
+	const record = await db.prepare(sql).bind(guildId, groupName).first();
+	if (record == null) {
+		console.log('No data.');
+		throw new Error('D1 Error');
+	}
+
+	if (record.Label == null || typeof record.Label !== 'string') {
+		console.log('Invalid record:', record);
+		throw new Error('D1 Error');
+	}
+	return record.Label;
 }
 
 async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Promise<string[]> {

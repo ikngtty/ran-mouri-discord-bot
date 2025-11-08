@@ -2,6 +2,11 @@
 
 ## Commands
 
+- `/choice`
+    - Make a choice.
+    - option `group`
+        - To specify a choice group.
+        - Required.
 - `/choices view`
     - View choices or choice groups.
     - option `group`
