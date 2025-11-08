@@ -172,7 +172,15 @@ async function handleCommandChoicesAdd(db: D1Database, guildId: string, options:
 	}
 	const value: string = optionValue.value;
 
-	// TODO: Handle a duplication error.
+	if (await fetchExistenseOfChoice(db, guildId, groupName, value)) {
+		const content = `${groupName}に「${value}」はもうあるわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	}
+
 	await insertChoice(db, guildId, groupName, value);
 
 	const content = `${groupName}に「${value}」を追加したわ。`;
@@ -234,6 +242,17 @@ async function insertChoice(db: D1Database, guildId: string, groupName: string, 
 		throw new Error('D1 Error');
 	}
 	return;
+}
+
+async function fetchExistenseOfChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<boolean> {
+	const sql = 'SELECT Label FROM Choices WHERE GuildId = ? AND GroupName = ? AND Label = ?';
+	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+
+	return dbResult.results.length > 0;
 }
 
 async function fetchChoices(db: D1Database, guildId: string, groupName: string): Promise<string[]> {
