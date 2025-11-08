@@ -3,4 +3,7 @@
 ## Commands
 
 - `/choices view`
-    - View choice group names.
+    - View choices or choice groups.
+    - option `group`
+        - To specify a choice group to view choices.
+        - If not specified, you can view choice groups.

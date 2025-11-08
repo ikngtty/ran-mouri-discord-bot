@@ -83,7 +83,7 @@ export default {
 
 						switch (subcommand.name) {
 							case 'view':
-								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId);
+								return handleCommandChoicesView(env.prod_db_ran_mouri, guildId, subcommand.options);
 						}
 				}
 		}
@@ -106,7 +106,36 @@ function handleCommandPing(): Response {
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesView(db: D1Database, guildId: string): Promise<Response> {
+async function handleCommandChoicesView(db: D1Database, guildId: string, options: any): Promise<Response> {
+	if (options == null) {
+		return handleCommandChoicesViewWithoutGroup(db, guildId);
+	}
+	if (!Array.isArray(options)) {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
+	if (!optionGroup) {
+		return handleCommandChoicesViewWithoutGroup(db, guildId);
+	}
+	const groupName = optionGroup.value;
+	if (!groupName) {
+		return makeResponseUnexpectedRequestBody();
+	}
+	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
+}
+
+async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string, groupName: string): Promise<Response> {
+	const choiceLabels = await fetchChoices(db, guildId, groupName);
+
+	const content = `選択肢はこれ：\n${choiceLabels.join('\n')}`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandChoicesViewWithoutGroup(db: D1Database, guildId: string): Promise<Response> {
 	const groupNames = await fetchChoiceGroupNamesOfGuild(db, guildId);
 
 	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
@@ -158,6 +187,26 @@ function makeResponseUnexpectedRequestBody(): Response {
 		detail: "Your request's body is something different from our expectations.",
 	};
 	return Response.json(err, { status: 400 });
+}
+
+async function fetchChoices(db: D1Database, guildId: string, groupName: string): Promise<string[]> {
+	const sql = 'SELECT Label FROM Choices WHERE GuildId = ? AND GroupName = ?';
+	const dbResult = await db.prepare(sql).bind(guildId, groupName).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+
+	const labels: string[] = [];
+	for (const record of dbResult.results) {
+		if (!record.Label || typeof record.Label !== 'string') {
+			console.log('Invalid record:', record);
+			throw new Error('D1 Error');
+		}
+		const label: string = record.Label;
+		labels.push(label);
+	}
+	return labels;
 }
 
 async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Promise<string[]> {
