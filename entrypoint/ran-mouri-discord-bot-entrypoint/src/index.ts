@@ -144,7 +144,9 @@ async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string
 	const choiceLabels = await fetchChoices(db, guildId, groupName);
 
 	const content =
-		choiceLabels.length === 0 ? `${groupName}なんて選択肢グループは無いわ。` : `${groupName}の選択肢はこれ：\n${choiceLabels.join('\n')}`;
+		choiceLabels.length === 0
+			? `「${groupName}」なんて選択肢グループは無いわ。`
+			: `「${groupName}」の選択肢はこれ：\n${choiceLabels.join('\n')}`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
@@ -187,7 +189,7 @@ async function handleCommandChoicesAdd(maxChoiceCountOfGuild: number, db: D1Data
 	const value: string = optionValue.value;
 
 	if (await fetchExistenseOfChoice(db, guildId, groupName, value)) {
-		const content = `${groupName}に「${value}」はもうあるわ。`;
+		const content = `「${groupName}」に「${value}」はもうあるわ。`;
 		const body = {
 			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 			data: { content },
@@ -206,7 +208,7 @@ async function handleCommandChoicesAdd(maxChoiceCountOfGuild: number, db: D1Data
 
 	await insertChoice(db, guildId, groupName, value);
 
-	const content = `${groupName}に「${value}」を追加したわ。`;
+	const content = `「${groupName}」に「${value}」を追加したわ。`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
@@ -241,7 +243,7 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 
 	const deleteCount = await deleteChoice(db, guildId, groupName, value);
 
-	const content = deleteCount === 0 ? `${groupName}の「${value}」なんて無かったわ。` : `${groupName}の「${value}」を削除したわ。`;
+	const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
