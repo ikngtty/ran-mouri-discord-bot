@@ -78,7 +78,7 @@ export default {
 						return handleCommandPing();
 
 					case 'choice': {
-						if (interaction.guild_id == null || typeof interaction.guild_id !== 'string') {
+						if (typeof interaction.guild_id !== 'string') {
 							return makeResponseUnexpectedRequestBody();
 						}
 						const guildId: string = interaction.guild_id;
@@ -87,7 +87,7 @@ export default {
 					}
 
 					case 'choices': {
-						if (interaction.guild_id == null || typeof interaction.guild_id !== 'string') {
+						if (typeof interaction.guild_id !== 'string') {
 							return makeResponseUnexpectedRequestBody();
 						}
 						const guildId: string = interaction.guild_id;
@@ -142,10 +142,7 @@ async function handleCommandChoice(db: D1Database, guildId: string, options: any
 	}
 
 	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
-	if (!optionGroup) {
-		return makeResponseUnexpectedRequestBody();
-	}
-	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+	if (!optionGroup || typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const groupName: string = optionGroup.value;
@@ -182,7 +179,7 @@ async function handleCommandChoicesView(db: D1Database, guildId: string, options
 	if (!optionGroup) {
 		return handleCommandChoicesViewWithoutGroup(db, guildId);
 	}
-	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+	if (typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const groupName: string = optionGroup.value;
@@ -221,19 +218,13 @@ async function handleCommandChoicesAdd(maxChoiceCountOfGuild: number, db: D1Data
 	}
 
 	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
-	if (!optionGroup) {
-		return makeResponseUnexpectedRequestBody();
-	}
-	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+	if (!optionGroup || typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const groupName: string = optionGroup.value;
 
 	const optionValue = options.find((option) => option.type === 3 && option.name === 'value');
-	if (!optionValue) {
-		return makeResponseUnexpectedRequestBody();
-	}
-	if (optionValue.value == null || typeof optionValue.value !== 'string') {
+	if (!optionValue || typeof optionValue.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const value: string = optionValue.value;
@@ -274,19 +265,13 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	// TODO: A feature to delete all choices of a group.
 
 	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
-	if (!optionGroup) {
-		return makeResponseUnexpectedRequestBody();
-	}
-	if (optionGroup.value == null || typeof optionGroup.value !== 'string') {
+	if (!optionGroup || typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const groupName: string = optionGroup.value;
 
 	const optionValue = options.find((option) => option.type === 3 && option.name === 'value');
-	if (!optionValue) {
-		return makeResponseUnexpectedRequestBody();
-	}
-	if (optionValue.value == null || typeof optionValue.value !== 'string') {
+	if (!optionValue || typeof optionValue.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const value: string = optionValue.value;
@@ -305,7 +290,7 @@ async function handleCommandRandom(options: any): Promise<Response> {
 	let count = 7;
 	if (options != null && Array.isArray(options)) {
 		const countOption = options.find((option) => option.type === 4 && option.name == 'count');
-		if (countOption != null && countOption.value != null && typeof countOption.value === 'number') {
+		if (countOption && typeof countOption.value === 'number') {
 			count = countOption.value;
 		}
 	}
@@ -328,7 +313,7 @@ async function handleCommandRRandom(options: any): Promise<Response> {
 	let count = 7;
 	if (options != null && Array.isArray(options)) {
 		const countOption = options.find((option) => option.type === 4 && option.name == 'count');
-		if (countOption != null && countOption.value != null && typeof countOption.value === 'number') {
+		if (countOption && typeof countOption.value === 'number') {
 			count = countOption.value;
 		}
 	}
@@ -428,7 +413,7 @@ async function fetchChoices(db: D1Database, guildId: string, groupName: string):
 
 	const labels: string[] = [];
 	for (const record of dbResult.results) {
-		if (!record.Label || typeof record.Label !== 'string') {
+		if (typeof record.Label !== 'string') {
 			console.log('Invalid record:', record);
 			throw new Error('D1 Error');
 		}
@@ -446,7 +431,7 @@ async function fetchCountOfChoices(db: D1Database, guildId: string, groupName: s
 		throw new Error('D1 Error');
 	}
 
-	if (record.Count == null || typeof record.Count !== 'number') {
+	if (typeof record.Count !== 'number') {
 		console.log('Invalid record:', record);
 		throw new Error('D1 Error');
 	}
@@ -461,7 +446,7 @@ async function fetchRandomChoice(db: D1Database, guildId: string, groupName: str
 		throw new Error('D1 Error');
 	}
 
-	if (record.Label == null || typeof record.Label !== 'string') {
+	if (typeof record.Label !== 'string') {
 		console.log('Invalid record:', record);
 		throw new Error('D1 Error');
 	}
@@ -478,7 +463,7 @@ async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Pr
 
 	const groupNames: string[] = [];
 	for (const record of dbResult.results) {
-		if (!record.GroupName || typeof record.GroupName !== 'string') {
+		if (typeof record.GroupName !== 'string') {
 			console.log('Invalid record:', record);
 			throw new Error('D1 Error');
 		}
@@ -496,7 +481,7 @@ async function fetchCountOfChoicesOfGuild(db: D1Database, guildId: string): Prom
 		throw new Error('D1 Error');
 	}
 
-	if (record.Count == null || typeof record.Count !== 'number') {
+	if (typeof record.Count !== 'number') {
 		console.log('Invalid record:', record);
 		throw new Error('D1 Error');
 	}
