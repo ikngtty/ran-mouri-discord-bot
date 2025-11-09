@@ -314,7 +314,7 @@ async function handleCommandRRandom(options: any): Promise<Response> {
 	const index = getRandomInt(count);
 	const nums = numsOrigin.slice(index).concat(numsOrigin.slice(0, index));
 
-	const content = nums.join(' ');
+	const content = nums.join(count >= 10 ? ' ' : '');
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
