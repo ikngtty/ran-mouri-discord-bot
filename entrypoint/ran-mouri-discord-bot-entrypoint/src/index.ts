@@ -25,7 +25,7 @@ export default {
 			throw new Error('Missing env var "DISCORD_PUBLIC_KEY".');
 		}
 		const maxChoiceCountOfGuildText = env.MAX_CHOICE_COUNT_OF_GUILD;
-		if (maxChoiceCountOfGuildText == null || maxChoiceCountOfGuildText === '') {
+		if (maxChoiceCountOfGuildText == null || maxChoiceCountOfGuildText.length === 0) {
 			throw new Error('Missing env var "MAX_CHOICE_COUNT_OF_GUILD".');
 		}
 		const maxChoiceCountOfGuild = parseInt(maxChoiceCountOfGuildText);
