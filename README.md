@@ -11,7 +11,7 @@
     - View choices or choice groups.
     - option `group`
         - To specify a choice group to view choices.
-        - If not specified, you can view choice groups.
+        - Optional. If not specified, you can view choice groups.
 - `/choices add`
     - Add a choice.
     - option `group`
@@ -32,7 +32,9 @@
     - Get RANDOM values.
     - option `count`
         - To specify a count of values.
+        - Optional. Default value is 7.
 - `/r-random`
     - Get R-RANDOM values.
     - option `count`
         - To specify a count of values.
+        - Optional. Default value is 7.
