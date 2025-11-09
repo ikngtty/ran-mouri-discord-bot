@@ -71,6 +71,19 @@
             }
         ]
     },
+    "random": {
+        "name": "random",
+        "description": "RANDOM🎹",
+        "options": [
+            {
+                "type": 4,
+                "name": "count",
+                "description": "シャッフルする数",
+                "min_value": 1,
+                "max_value": 100
+            }
+        ]
+    },
     "r-random": {
         "name": "r-random",
         "description": "R-RANDOM🔄",

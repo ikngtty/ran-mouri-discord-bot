@@ -110,6 +110,9 @@ export default {
 						}
 					}
 
+					case 'random':
+						return handleCommandRandom(data.options);
+
 					case 'r-random':
 						return handleCommandRRandom(data.options);
 				}
@@ -291,6 +294,29 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	const deleteCount = await deleteChoice(db, guildId, groupName, value);
 
 	const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandRandom(options: any): Promise<Response> {
+	let count = 7;
+	if (options != null && Array.isArray(options)) {
+		const countOption = options.find((option) => option.type === 4 && option.name == 'count');
+		if (countOption != null && countOption.value != null && typeof countOption.value === 'number') {
+			count = countOption.value;
+		}
+	}
+
+	const nums = seq(1, count);
+	for (let i = count - 1; i >= 1; i--) {
+		const j = getRandomInt(i + 1); // 0 To i
+		[nums[i], nums[j]] = [nums[j], nums[i]];
+	}
+
+	const content = nums.join(count >= 10 ? ' ' : '');
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },

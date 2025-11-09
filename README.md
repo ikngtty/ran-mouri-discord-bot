@@ -28,6 +28,10 @@
     - option `value`
         - To specify a value of choice to delete.
         - Required.
+- `/random`
+    - Get RANDOM values.
+    - option `count`
+        - To specify a count of values.
 - `/r-random`
     - Get R-RANDOM values.
     - option `count`
