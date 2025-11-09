@@ -27,7 +27,7 @@
         - Required.
     - option `value`
         - To specify a value of choice to delete.
-        - Required.
+        - Optional. If not specified, all choices of the specified group is deleted.
 - `/random`
     - Get RANDOM values.
     - option `count`

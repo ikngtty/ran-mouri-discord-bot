@@ -262,28 +262,37 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 		return makeResponseUnexpectedRequestBody();
 	}
 
-	// TODO: A feature to delete all choices of a group.
-
 	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
 	if (!optionGroup || typeof optionGroup.value !== 'string') {
 		return makeResponseUnexpectedRequestBody();
 	}
 	const groupName: string = optionGroup.value;
 
+	let value: string | null = null;
 	const optionValue = options.find((option) => option.type === 3 && option.name === 'value');
-	if (!optionValue || typeof optionValue.value !== 'string') {
-		return makeResponseUnexpectedRequestBody();
+	if (optionValue && typeof optionValue.value === 'string') {
+		value = optionValue.value;
 	}
-	const value: string = optionValue.value;
 
-	const deleteCount = await deleteChoice(db, guildId, groupName, value);
+	if (value === null) {
+		const deleteCount = await deleteChoicesOfGuild(db, guildId, groupName);
 
-	const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
-	const body = {
-		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-		data: { content },
-	};
-	return Response.json(body, { headers: makeHeaderNormal() });
+		const content = deleteCount === 0 ? `「${groupName}」なんて無かったわ。` : `「${groupName}」の選択肢を全部削除したわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	} else {
+		const deleteCount = await deleteChoice(db, guildId, groupName, value);
+
+		const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	}
 }
 
 async function handleCommandRandom(options: any): Promise<Response> {
@@ -389,6 +398,16 @@ async function insertChoice(db: D1Database, guildId: string, groupName: string, 
 async function deleteChoice(db: D1Database, guildId: string, groupName: string, label: string): Promise<number> {
 	const sql = 'DELETE FROM Choices WHERE GuildId = ? AND GroupName = ? AND Label = ?';
 	const dbResult = await db.prepare(sql).bind(guildId, groupName, label).run();
+	if (!dbResult.success) {
+		console.log(dbResult.error);
+		throw new Error('D1 Error');
+	}
+	return dbResult.meta.changes;
+}
+
+async function deleteChoicesOfGuild(db: D1Database, guildId: string, groupName: string): Promise<number> {
+	const sql = 'DELETE FROM Choices WHERE GuildId = ? AND GroupName = ?';
+	const dbResult = await db.prepare(sql).bind(guildId, groupName).run();
 	if (!dbResult.success) {
 		console.log(dbResult.error);
 		throw new Error('D1 Error');
