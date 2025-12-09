@@ -213,9 +213,10 @@ async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string
 }
 
 async function handleCommandChoicesViewWithoutGroup(db: D1Database, guildId: string): Promise<Response> {
-	const groupNames = await fetchChoiceGroupNamesOfGuild(db, guildId);
+	const items = await fetchCountOfLabelsOfChoices(db, guildId);
 
-	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
+	const rows = items.map((item) => `${item.groupName} (${item.count})`);
+	const content = `選択肢グループはこれ：\n${rows.join('\n')}`;
 	const body = {
 		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
 		data: { content },
@@ -483,24 +484,25 @@ async function fetchRandomChoice(db: D1Database, guildId: string, groupName: str
 	return record.Label;
 }
 
-async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Promise<string[]> {
-	const sql = 'SELECT GroupName FROM Choices WHERE GuildId = ? GROUP BY GroupName';
+async function fetchCountOfLabelsOfChoices(db: D1Database, guildId: string): Promise<{ groupName: string; count: number }[]> {
+	const sql = 'SELECT GroupName, COUNT(Label) as Count FROM Choices WHERE GuildId = ? GROUP BY GroupName';
 	const dbResult = await db.prepare(sql).bind(guildId).run();
 	if (!dbResult.success) {
 		console.log(dbResult.error);
 		throw new Error('D1 Error');
 	}
 
-	const groupNames: string[] = [];
+	const items: { groupName: string; count: number }[] = [];
 	for (const record of dbResult.results) {
-		if (typeof record.GroupName !== 'string') {
+		if (typeof record.GroupName !== 'string' || typeof record.Count !== 'number') {
 			console.log('Invalid record:', record);
 			throw new Error('D1 Error');
 		}
 		const groupName: string = record.GroupName;
-		groupNames.push(groupName);
+		const count: number = record.Count;
+		items.push({ groupName, count });
 	}
-	return groupNames;
+	return items;
 }
 
 async function fetchCountOfChoicesOfGuild(db: D1Database, guildId: string): Promise<number> {
