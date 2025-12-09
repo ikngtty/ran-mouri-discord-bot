@@ -113,9 +113,7 @@ export default {
 
 							switch (subcommand.name) {
 								case 'view':
-									return handleCommandChoicesView(db, guildId, subcommand.options);
-								case 'view-new':
-									return handleCommandChoicesViewNew(db, guildId, subcommand.options, appId, continuationToken, ctx);
+									return handleCommandChoicesView(db, guildId, subcommand.options, appId, continuationToken, ctx);
 								case 'add':
 									return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
 								case 'delete':
@@ -190,27 +188,7 @@ async function handleCommandChoice(db: D1Database, guildId: string, options: any
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesView(db: D1Database, guildId: string, options: any): Promise<Response> {
-	if (options == null) {
-		return handleCommandChoicesViewWithoutGroup(db, guildId);
-	}
-	if (!Array.isArray(options)) {
-		return makeResponseUnexpectedRequestBody();
-	}
-
-	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
-	if (!optionGroup) {
-		return handleCommandChoicesViewWithoutGroup(db, guildId);
-	}
-	if (typeof optionGroup.value !== 'string') {
-		return makeResponseUnexpectedRequestBody();
-	}
-	const groupName: string = optionGroup.value;
-
-	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
-}
-
-async function handleCommandChoicesViewNew(
+async function handleCommandChoicesView(
 	db: D1Database,
 	guildId: string,
 	options: any,
@@ -234,24 +212,10 @@ async function handleCommandChoicesViewNew(
 	}
 	const groupName: string = optionGroup.value;
 
-	return handleCommandChoicesViewWithGroupNew(db, guildId, groupName, appId, continuationToken, ctx);
+	return handleCommandChoicesViewWithGroup(db, guildId, groupName, appId, continuationToken, ctx);
 }
 
-async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string, groupName: string): Promise<Response> {
-	const choiceLabels = await fetchChoices(db, guildId, groupName);
-
-	const content =
-		choiceLabels.length === 0
-			? `「${groupName}」なんて選択肢グループは無いわ。`
-			: `「${groupName}」の選択肢はこれ：\n${choiceLabels.join('\n')}`;
-	const body = {
-		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-		data: { content },
-	};
-	return Response.json(body, { headers: makeHeaderNormal() });
-}
-
-async function handleCommandChoicesViewWithGroupNew(
+async function handleCommandChoicesViewWithGroup(
 	db: D1Database,
 	guildId: string,
 	groupName: string,
