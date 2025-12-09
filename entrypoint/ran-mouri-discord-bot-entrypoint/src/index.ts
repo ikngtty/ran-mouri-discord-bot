@@ -93,6 +93,16 @@ export default {
 							}
 							const guildId: string = interaction.guild_id;
 
+							if (typeof interaction.application_id !== 'string') {
+								break responseBlock;
+							}
+							const appId: string = interaction.application_id;
+
+							if (typeof interaction.token !== 'string') {
+								break responseBlock;
+							}
+							const continuationToken: string = interaction.token;
+
 							if (!Array.isArray(data.options) || data.options.length !== 1) {
 								break responseBlock;
 							}
@@ -103,7 +113,7 @@ export default {
 
 							switch (subcommand.name) {
 								case 'view':
-									return handleCommandChoicesView(db, guildId, subcommand.options);
+									return handleCommandChoicesView(db, guildId, subcommand.options, appId, continuationToken, ctx);
 								case 'add':
 									return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
 								case 'delete':
@@ -178,7 +188,14 @@ async function handleCommandChoice(db: D1Database, guildId: string, options: any
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesView(db: D1Database, guildId: string, options: any): Promise<Response> {
+async function handleCommandChoicesView(
+	db: D1Database,
+	guildId: string,
+	options: any,
+	appId: string,
+	continuationToken: string,
+	ctx: ExecutionContext
+): Promise<Response> {
 	if (options == null) {
 		return handleCommandChoicesViewWithoutGroup(db, guildId);
 	}
@@ -195,19 +212,43 @@ async function handleCommandChoicesView(db: D1Database, guildId: string, options
 	}
 	const groupName: string = optionGroup.value;
 
-	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
+	return handleCommandChoicesViewWithGroup(db, guildId, groupName, appId, continuationToken, ctx);
 }
 
-async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string, groupName: string): Promise<Response> {
+async function handleCommandChoicesViewWithGroup(
+	db: D1Database,
+	guildId: string,
+	groupName: string,
+	appId: string,
+	continuationToken: string,
+	ctx: ExecutionContext
+): Promise<Response> {
 	const choiceLabels = await fetchChoices(db, guildId, groupName);
 
-	const content =
-		choiceLabels.length === 0
-			? `「${groupName}」なんて選択肢グループは無いわ。`
-			: `「${groupName}」の選択肢はこれ：\n${choiceLabels.join('\n')}`;
+	if (choiceLabels.length === 0) {
+		const content = `「${groupName}」なんて選択肢グループは無いわ。`;
+		const body = {
+			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+			data: { content },
+		};
+		return Response.json(body, { headers: makeHeaderNormal() });
+	}
+
+	const LABEL_COUNT_PER_MESSAGE = 12; // NOTE: 140 * 12 < 2000
+
+	ctx.waitUntil(
+		(async () => {
+			for (const [sliceIndex, labelsSlice] of eachSlice(choiceLabels, LABEL_COUNT_PER_MESSAGE)) {
+				const fromIndex = sliceIndex * LABEL_COUNT_PER_MESSAGE;
+				const toIndex = fromIndex + labelsSlice.length - 1;
+				const content = `「${groupName}」の選択肢はこれ(${fromIndex + 1} - ${toIndex + 1})：\n${labelsSlice.join('\n')}`;
+				await sendDeferredMessage(appId, continuationToken, content);
+			}
+		})()
+	);
+
 	const body = {
-		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-		data: { content },
+		type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
 	};
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
@@ -352,6 +393,17 @@ async function handleCommandRRandom(options: any): Promise<Response> {
 		data: { content },
 	};
 	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function sendDeferredMessage(appId: string, continuationToken: string, content: string): Promise<Response> {
+	const url = `https://discord.com/api/v10/webhooks/${appId}/${continuationToken}`;
+	return fetch(url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ content }),
+	});
 }
 
 function signatureIsValid(publicKey: string, body: string, timestamp: string, signature: string): boolean {
@@ -527,4 +579,11 @@ function seq(start: number, length: number): number[] {
 // 0 to (max - 1)
 function getRandomInt(max: number): number {
 	return Math.floor(Math.random() * max);
+}
+
+function* eachSlice<T>(array: T[], size: number): Generator<[number, T[]]> {
+	let sliceIndex = 0;
+	for (let elemIndex = 0; elemIndex < array.length; elemIndex += size) {
+		yield [sliceIndex++, array.slice(elemIndex, elemIndex + size)];
+	}
 }
