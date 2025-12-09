@@ -104,8 +104,6 @@ export default {
 							switch (subcommand.name) {
 								case 'view':
 									return handleCommandChoicesView(db, guildId, subcommand.options);
-								case 'view-new':
-									return handleCommandChoicesViewNew(db, guildId, subcommand.options);
 								case 'add':
 									return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
 								case 'delete':
@@ -200,26 +198,6 @@ async function handleCommandChoicesView(db: D1Database, guildId: string, options
 	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
 }
 
-async function handleCommandChoicesViewNew(db: D1Database, guildId: string, options: any): Promise<Response> {
-	if (options == null) {
-		return handleCommandChoicesViewWithoutGroup(db, guildId);
-	}
-	if (!Array.isArray(options)) {
-		return makeResponseUnexpectedRequestBody();
-	}
-
-	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
-	if (!optionGroup) {
-		return handleCommandChoicesViewWithoutGroupNew(db, guildId);
-	}
-	if (typeof optionGroup.value !== 'string') {
-		return makeResponseUnexpectedRequestBody();
-	}
-	const groupName: string = optionGroup.value;
-
-	return handleCommandChoicesViewWithGroup(db, guildId, groupName);
-}
-
 async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string, groupName: string): Promise<Response> {
 	const choiceLabels = await fetchChoices(db, guildId, groupName);
 
@@ -235,17 +213,6 @@ async function handleCommandChoicesViewWithGroup(db: D1Database, guildId: string
 }
 
 async function handleCommandChoicesViewWithoutGroup(db: D1Database, guildId: string): Promise<Response> {
-	const groupNames = await fetchChoiceGroupNamesOfGuild(db, guildId);
-
-	const content = `選択肢グループはこれ：\n${groupNames.join('\n')}`;
-	const body = {
-		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-		data: { content },
-	};
-	return Response.json(body, { headers: makeHeaderNormal() });
-}
-
-async function handleCommandChoicesViewWithoutGroupNew(db: D1Database, guildId: string): Promise<Response> {
 	const items = await fetchCountOfLabelsOfChoices(db, guildId);
 
 	const rows = items.map((item) => `${item.groupName} (${item.count})`);
@@ -515,26 +482,6 @@ async function fetchRandomChoice(db: D1Database, guildId: string, groupName: str
 		throw new Error('D1 Error');
 	}
 	return record.Label;
-}
-
-async function fetchChoiceGroupNamesOfGuild(db: D1Database, guildId: string): Promise<string[]> {
-	const sql = 'SELECT GroupName FROM Choices WHERE GuildId = ? GROUP BY GroupName';
-	const dbResult = await db.prepare(sql).bind(guildId).run();
-	if (!dbResult.success) {
-		console.log(dbResult.error);
-		throw new Error('D1 Error');
-	}
-
-	const groupNames: string[] = [];
-	for (const record of dbResult.results) {
-		if (typeof record.GroupName !== 'string') {
-			console.log('Invalid record:', record);
-			throw new Error('D1 Error');
-		}
-		const groupName: string = record.GroupName;
-		groupNames.push(groupName);
-	}
-	return groupNames;
 }
 
 async function fetchCountOfLabelsOfChoices(db: D1Database, guildId: string): Promise<{ groupName: string; count: number }[]> {
