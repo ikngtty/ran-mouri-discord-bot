@@ -63,60 +63,71 @@ export default {
 		}
 
 		// Response for each interaction.
-		switch (interaction.type) {
-			case 1: // PING
-				return handlePing();
+		responseBlock: {
+			switch (interaction.type) {
+				case 1: // PING
+					return handlePing();
 
-			case 2: // APPLICATION COMMAND
-				if (interaction.data == null) {
-					return makeResponseUnexpectedRequestBody();
-				}
-				const data = interaction.data;
+				case 2: // APPLICATION COMMAND
+					if (interaction.data == null) {
+						break responseBlock;
+					}
+					const data = interaction.data;
 
-				switch (data.name) {
-					case 'ping':
-						return handleCommandPing();
+					switch (data.name) {
+						case 'ping':
+							return handleCommandPing();
 
-					case 'choice': {
-						if (typeof interaction.guild_id !== 'string') {
-							return makeResponseUnexpectedRequestBody();
+						case 'choice': {
+							if (typeof interaction.guild_id !== 'string') {
+								break responseBlock;
+							}
+							const guildId: string = interaction.guild_id;
+
+							return handleCommandChoice(db, guildId, data.options);
 						}
-						const guildId: string = interaction.guild_id;
 
-						return handleCommandChoice(db, guildId, data.options);
+						case 'choices': {
+							if (typeof interaction.guild_id !== 'string') {
+								break responseBlock;
+							}
+							const guildId: string = interaction.guild_id;
+
+							if (!Array.isArray(data.options) || data.options.length !== 1) {
+								break responseBlock;
+							}
+							const subcommand = data.options[0];
+							if (subcommand.type !== 1) {
+								break responseBlock;
+							}
+
+							switch (subcommand.name) {
+								case 'view':
+									return handleCommandChoicesView(db, guildId, subcommand.options);
+								case 'add':
+									return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
+								case 'delete':
+									return handleCommandChoicesDelete(db, guildId, subcommand.options);
+								default:
+									break responseBlock;
+							}
+						}
+
+						case 'random':
+							return handleCommandRandom(data.options);
+
+						case 'r-random':
+							return handleCommandRRandom(data.options);
+
+						default:
+							break responseBlock;
 					}
 
-					case 'choices': {
-						if (typeof interaction.guild_id !== 'string') {
-							return makeResponseUnexpectedRequestBody();
-						}
-						const guildId: string = interaction.guild_id;
-
-						if (!Array.isArray(data.options) || data.options.length !== 1) {
-							return makeResponseUnexpectedRequestBody();
-						}
-						const subcommand = data.options[0];
-						if (subcommand.type !== 1) {
-							return makeResponseUnexpectedRequestBody();
-						}
-
-						switch (subcommand.name) {
-							case 'view':
-								return handleCommandChoicesView(db, guildId, subcommand.options);
-							case 'add':
-								return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
-							case 'delete':
-								return handleCommandChoicesDelete(db, guildId, subcommand.options);
-						}
-					}
-
-					case 'random':
-						return handleCommandRandom(data.options);
-
-					case 'r-random':
-						return handleCommandRRandom(data.options);
-				}
+				default:
+					break responseBlock;
+			}
 		}
+
 		return makeResponseUnexpectedRequestBody();
 	},
 } satisfies ExportedHandler<Env>;
