@@ -27,7 +27,12 @@
         - Required.
     - option `value`
         - To specify a value of choice to delete.
-        - Optional. If not specified, all choices of the specified group is deleted.
+        - Required.
+- `/choices delete-group`
+    - Delete a choice group.
+    - option `group`
+        - To specify a choice group to delete.
+        - Required.
 - `/random`
     - Get RANDOM values.
     - option `count`

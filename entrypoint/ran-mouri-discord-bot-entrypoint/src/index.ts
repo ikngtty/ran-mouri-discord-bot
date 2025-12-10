@@ -118,6 +118,8 @@ export default {
 									return handleCommandChoicesAdd(maxChoiceCountOfGuild, db, guildId, subcommand.options);
 								case 'delete':
 									return handleCommandChoicesDelete(db, guildId, subcommand.options);
+								case 'delete-group':
+									return handleCommandChoicesDeleteGroup(db, guildId, subcommand.options);
 								default:
 									break responseBlock;
 							}
@@ -321,31 +323,41 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	}
 	const groupName: string = optionGroup.value;
 
-	let value: string | null = null;
 	const optionValue = options.find((option) => option.type === 3 && option.name === 'value');
-	if (optionValue && typeof optionValue.value === 'string') {
-		value = optionValue.value;
+	if (!optionValue || typeof optionValue.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const value: string = optionValue.value;
+
+	const deleteCount = await deleteChoice(db, guildId, groupName, value);
+
+	const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandChoicesDeleteGroup(db: D1Database, guildId: string, options: any): Promise<Response> {
+	if (options == null || !Array.isArray(options)) {
+		return makeResponseUnexpectedRequestBody();
 	}
 
-	if (value === null) {
-		const deleteCount = await deleteChoicesOfGuild(db, guildId, groupName);
-
-		const content = deleteCount === 0 ? `「${groupName}」なんて無かったわ。` : `「${groupName}」の選択肢を全部削除したわ。`;
-		const body = {
-			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-			data: { content },
-		};
-		return Response.json(body, { headers: makeHeaderNormal() });
-	} else {
-		const deleteCount = await deleteChoice(db, guildId, groupName, value);
-
-		const content = deleteCount === 0 ? `「${groupName}」の「${value}」なんて無かったわ。` : `「${groupName}」の「${value}」を削除したわ。`;
-		const body = {
-			type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-			data: { content },
-		};
-		return Response.json(body, { headers: makeHeaderNormal() });
+	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
+	if (!optionGroup || typeof optionGroup.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
 	}
+	const groupName: string = optionGroup.value;
+
+	const deleteCount = await deleteChoicesOfGuild(db, guildId, groupName);
+
+	const content = deleteCount === 0 ? `「${groupName}」なんて無かったわ。` : `「${groupName}」の選択肢を全部削除したわ。`;
+	const body = {
+		type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+		data: { content },
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
 async function handleCommandRandom(options: any): Promise<Response> {
