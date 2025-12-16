@@ -33,6 +33,11 @@
     - option `group`
         - To specify a choice group to delete.
         - Required.
+- `/choices dump`
+    - Dump choices of a group.
+    - option `group`
+        - To specify a choice group to dump.
+        - Required.
 - `/random`
     - Get RANDOM values.
     - option `count`

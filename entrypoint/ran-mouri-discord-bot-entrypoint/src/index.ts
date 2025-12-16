@@ -120,6 +120,8 @@ export default {
 									return handleCommandChoicesDelete(db, guildId, subcommand.options);
 								case 'delete-group':
 									return handleCommandChoicesDeleteGroup(db, guildId, subcommand.options);
+								case 'dump':
+									return handleCommandChoicesDump(db, guildId, subcommand.options);
 								default:
 									break responseBlock;
 							}
@@ -337,6 +339,29 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 		data: { content },
 	};
 	return Response.json(body, { headers: makeHeaderNormal() });
+}
+
+async function handleCommandChoicesDump(db: D1Database, guildId: string, options: any): Promise<Response> {
+	if (options == null || !Array.isArray(options)) {
+		return makeResponseUnexpectedRequestBody();
+	}
+
+	const optionGroup = options.find((option) => option.type === 3 && option.name === 'group');
+	if (!optionGroup || typeof optionGroup.value !== 'string') {
+		return makeResponseUnexpectedRequestBody();
+	}
+	const groupName: string = optionGroup.value;
+
+	const choiceLabels = await fetchChoices(db, guildId, groupName);
+
+	// TODO: Escape.
+	const fileName = `${groupName}.txt`;
+	const content = choiceLabels.join('\n');
+
+	const formData = new FormData();
+	const contentBlob = new Blob([content], { type: 'text/plain' });
+	formData.append('files[0]', contentBlob, fileName);
+	return new Response(formData);
 }
 
 async function handleCommandChoicesDeleteGroup(db: D1Database, guildId: string, options: any): Promise<Response> {
