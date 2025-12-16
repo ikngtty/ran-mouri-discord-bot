@@ -121,7 +121,7 @@ export default {
 								case 'delete-group':
 									return handleCommandChoicesDeleteGroup(db, guildId, subcommand.options);
 								case 'dump':
-									return handleCommandChoicesDump(db, guildId, subcommand.options);
+									return handleCommandChoicesDump(db, guildId, subcommand.options, appId, continuationToken, ctx);
 								default:
 									break responseBlock;
 							}
@@ -341,7 +341,14 @@ async function handleCommandChoicesDelete(db: D1Database, guildId: string, optio
 	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
-async function handleCommandChoicesDump(db: D1Database, guildId: string, options: any): Promise<Response> {
+async function handleCommandChoicesDump(
+	db: D1Database,
+	guildId: string,
+	options: any,
+	appId: string,
+	continuationToken: string,
+	ctx: ExecutionContext
+): Promise<Response> {
 	if (options == null || !Array.isArray(options)) {
 		return makeResponseUnexpectedRequestBody();
 	}
@@ -352,16 +359,25 @@ async function handleCommandChoicesDump(db: D1Database, guildId: string, options
 	}
 	const groupName: string = optionGroup.value;
 
-	const choiceLabels = await fetchChoices(db, guildId, groupName);
+	ctx.waitUntil(
+		(async () => {
+			const choiceLabels = await fetchChoices(db, guildId, groupName);
 
-	// TODO: Escape.
-	const fileName = `${groupName}.txt`;
-	const content = choiceLabels.join('\n');
+			// TODO: Escape.
+			const fileName = `${groupName}.txt`;
+			const content = choiceLabels.join('\n');
 
-	const formData = new FormData();
-	const contentBlob = new Blob([content], { type: 'text/plain' });
-	formData.append('files[0]', contentBlob, fileName);
-	return new Response(formData);
+			const formData = new FormData();
+			const contentBlob = new Blob([content], { type: 'text/plain' });
+			formData.append('files[0]', contentBlob, fileName);
+			await sendDeferredFormData(appId, continuationToken, formData);
+		})()
+	);
+
+	const body = {
+		type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+	};
+	return Response.json(body, { headers: makeHeaderNormal() });
 }
 
 async function handleCommandChoicesDeleteGroup(db: D1Database, guildId: string, options: any): Promise<Response> {
@@ -440,6 +456,14 @@ async function sendDeferredMessage(appId: string, continuationToken: string, con
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({ content }),
+	});
+}
+
+async function sendDeferredFormData(appId: string, continuationToken: string, formData: FormData): Promise<Response> {
+	const url = `https://discord.com/api/v10/webhooks/${appId}/${continuationToken}`;
+	return fetch(url, {
+		method: 'POST',
+		body: formData,
 	});
 }
 
